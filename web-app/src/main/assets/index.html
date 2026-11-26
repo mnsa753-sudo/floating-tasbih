@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>المسبحة العائمة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Aref+Ruqaa:wght@400;700&family=Cairo:wght@400;600;700;800&family=Changa:wght@400;600;700&family=El+Messiri:wght@400;600;700&family=Gulzar&family=Harmattan:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;600;700&family=Katibeh&family=Lalezar&family=Lateef:wght@400;700&family=Lemonada:wght@400;600;700&family=Mada:wght@400;600;700&family=Mirza:wght@400;600;700&family=Noto+Kufi+Arabic:wght@400;600;700;800&family=Noto+Naskh+Arabic:wght@400;600;700&family=Noto+Sans+Arabic:wght@400;600;700&family=Qahiri&family=Rakkas&family=Readex+Pro:wght@400;600;700&family=Reem+Kufi:wght@400;600;700&family=Rubik+Dirt&family=Tajawal:wght@400;500;700;800&family=Vibes&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg-dark: #090d16;
+    --panel-bg: rgba(15, 23, 42, 0.92);
+    --panel-border: rgba(148, 163, 184, 0.22);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --accent: #10b981;
+    --accent-soft: rgba(16, 185, 129, 0.16);
+    --bubble-alpha: 0.28;
+    --bubble-size: 96px;
+    --dhikr-size: 28px;
+    --dhikr-color: #f8fafc;
+    --dhikr-font: 'Noto Kufi Arabic', sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: transparent;
+    font-family: var(--dhikr-font);
+    color: var(--text-main);
+  }
+
+  /* خلفية داكنة عند الفتح المباشر في المتصفح وتبقى شفافة في وضع التراكب */
+  body.standalone-preview {
+    background: radial-gradient(circle at 50% 20%, #111827 0%, #060911 100%);
+  }
+
+  #stage {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  /* الفقاعة العائمة */
+  #bubble {
+    position: fixed;
+    left: 24px;
+    top: 42%;
+    width: var(--bubble-size);
+    height: var(--bubble-size);
+    border-radius: 50%;
+    background: rgba(15, 23, 42, var(--bubble-alpha));
+    border: 1.5px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    pointer-events: auto;
+    z-index: 40;
+    transition: transform 0.12s ease, box-shadow 0.2s ease;
+  }
+
+  #bubble:active {
+    cursor: grabbing;
+    transform: scale(0.96);
+  }
+
+  #bubble-count {
+    font-size: calc(var(--bubble-size) * 0.27);
+    font-weight: 800;
+    line-height: 1.1;
+    color: #ffffff;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+  }
+
+  #bubble-target {
+    font-size: calc(var(--bubble-size) * 0.12);
+    color: rgba(226, 232, 240, 0.85);
+    margin-top: 2px;
+    font-weight: 600;
+  }
+
+  #bubble-gear {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    color: #e2e8f0;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  /* النص المتصاعد السلس */
+  .floating-dhikr {
+    position: fixed;
+    transform: translate(-50%, 0);
+    font-family: var(--dhikr-font);
+    font-size: var(--dhikr-size);
+    font-weight: 700;
+    color: var(--dhikr-color);
+    text-align: center;
+    line-height: 1.45;
+    text-shadow: 0 4px 18px rgba(0, 0, 0, 0.75);
+    pointer-events: none;
+    z-index: 30;
+    will-change: transform, opacity;
+    animation: riseSmooth 1.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    max-width: 92vw;
+    white-space: pre-line;
+  }
+
+  .floating-dhikr.inverted-triangle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .floating-dhikr.inverted-triangle .tri-line {
+    display: block;
+    text-align: center;
+  }
+
+  @keyframes riseSmooth {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, 8px) scale(0.92);
+    }
+    18% {
+      opacity: 1;
+      transform: translate(-50%, -14px) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, -125px) scale(1.03);
+    }
+  }
+
+  /* لوحة الإعدادات */
+  #settings-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.62);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 60;
+    pointer-events: auto;
+  }
+
+  #settings-backdrop.open {
+    display: flex;
+  }
+
+  #settings-sheet {
+    width: 100%;
+    max-width: 560px;
+    max-height: 86vh;
+    overflow-y: auto;
+    background: var(--panel-bg);
+    border-top: 1px solid var(--panel-border);
+    border-radius: 24px 24px 0 0;
+    padding: 18px 18px 28px;
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.65);
+  }
+
+  .sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--panel-border);
+  }
+
+  .sheet-title {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--text-main);
+  }
+
+  .close-btn {
+    background: rgba(30, 41, 59, 0.9);
+    border: 1px solid var(--panel-border);
+    color: var(--text-main);
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .section {
+    margin-bottom: 16px;
+    padding: 12px;
+    border-radius: 16px;
+    background: rgba(30, 41, 59, 0.45);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+  }
+
+  .section-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin-bottom: 8px;
+  }
+
+  .muted-val {
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  select, input[type="text"], input[type="number"], input[type="range"] {
+    width: 100%;
+    font-family: inherit;
+  }
+
+  select, input[type="text"], input[type="number"] {
+    background: #0b1120;
+    color: var(--text-main);
+    border: 1px solid var(--panel-border);
+    border-radius: 11px;
+    padding: 9px 11px;
+    font-size: 13px;
+    outline: none;
+  }
+
+  select:focus, input[type="text"]:focus, input[type="number"]:focus {
+    border-color: var(--accent);
+  }
+
+  input[type="range"] {
+    accent-color: var(--accent);
+    height: 6px;
+    background: rgba(148, 163, 184, 0.25);
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  /* عينات الألوان (بدون تدرج قوس قزح) */
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .swatch {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: transform 0.14s ease, border-color 0.14s ease;
+  }
+
+  .swatch.active {
+    transform: scale(1.14);
+    border-color: #ffffff;
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+
+  .row-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 9px 12px;
+    border-radius: 11px;
+    border: 1px solid var(--panel-border);
+    background: rgba(15, 23, 42, 0.85);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #04130d;
+  }
+
+  .btn-danger {
+    background: rgba(239, 68, 68, 0.16);
+    border-color: rgba(239, 68, 68, 0.45);
+    color: #fca5a5;
+  }
+
+  .custom-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+    max-height: 140px;
+    overflow-y: auto;
+  }
+
+  .custom-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 10px;
+    background: rgba(11, 17, 32, 0.75);
+    font-size: 13px;
+  }
+
+  .custom-item span {
+    cursor: pointer;
+    flex: 1;
+  }
+
+  .del-chip {
+    background: transparent;
+    border: none;
+    color: #f87171;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 2px 6px;
+  }
+</style>
+</head>
+<body class="standalone-preview">
+<div id="stage"></div>
+
+<div id="bubble" title="اضغط للتسبيح أو اسحب لتحريك الفقاعة">
+  <button id="bubble-gear" type="button" title="الإعدادات">⚙</button>
+  <div id="bubble-count">0</div>
+  <div id="bubble-target">/ 33</div>
+</div>
+
+<div id="settings-backdrop">
+  <div id="settings-sheet">
+    <div class="sheet-header">
+      <div class="sheet-title">إعدادات المسبحة العائمة</div>
+      <button id="close-settings" class="close-btn" type="button">إغلاق</button>
+    </div>
+
+    <div class="section">
+      <div class="section-label"><span>الذكر الحالي</span></div>
+      <select id="dhikr-select"></select>
+      <div class="row-actions">
+        <input id="custom-dhikr-input" type="text" placeholder="أضف ذكراً مخصصاً..." />
+        <button id="add-dhikr-btn" class="btn btn-primary" type="button" style="flex:0 0 auto;">إضافة</button>
+      </div>
+      <div id="custom-dhikr-list" class="custom-list"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">
+        <span>العداد والهدف</span>
+        <span id="target-badge" class="muted-val">الهدف: 33</span>
+      </div>
+      <div class="row-actions">
+        <input id="target-input" type="number" min="1" max="100000" value="33" placeholder="الهدف" />
+        <button id="reset-count-btn" class="btn btn-danger" type="button">تصفير العداد</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">
+        <span>حجم الفقاعة</span>
+        <span id="bubble-size-val" class="muted-val">96px</span>
+      </div>
+      <input id="bubble-size-range" type="range" min="64" max="150" value="96" />
+
+      <div class="section-label" style="margin-top:12px;">
+        <span>شفافية الفقاعة</span>
+        <span id="bubble-alpha-val" class="muted-val">28%</span>
+      </div>
+      <input id="bubble-alpha-range" type="range" min="5" max="90" value="28" />
+    </div>
+
+    <div class="section">
+      <div class="section-label">
+        <span>حجم خط الذكر المتصاعد</span>
+        <span id="dhikr-size-val" class="muted-val">28px</span>
+      </div>
+      <input id="dhikr-size-range" type="range" min="64" max="120" value="64" />
+
+      <div class="section-label" style="margin-top:12px;"><span>الخط العربي (24 خطاً)</span></div>
+      <select id="font-select"></select>
+
+      <div class="section-label" style="margin-top:12px;"><span>لون خط الذكر</span></div>
+      <div id="color-swatches" class="swatches"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const STORAGE_KEY = 'floating_tasbih_final_state_v1';
+
+  const DEFAULT_ADHKAR = [
+    'سبحان الله',
+    'الحمد لله',
+    'لا إله إلا الله',
+    'الله أكبر',
+    'أستغفر الله العظيم',
+    'لا حول ولا قوة إلا بالله',
+    'سبحان الله وبحمده سبحان الله العظيم',
+    'اللهم صل وسلم على نبينا محمد'
+  ];
+
+  const FONTS = [
+    { name: 'الخط الكوفي (Noto Kufi)', value: "'Noto Kufi Arabic', sans-serif" },
+    { name: 'خط ريم الكوفي (Reem Kufi)', value: "'Reem Kufi', sans-serif" },
+    { name: 'كايرو (Cairo)', value: "'Cairo', sans-serif" },
+    { name: 'تجوال (Tajawal)', value: "'Tajawal', sans-serif" },
+    { name: 'أميري (Amiri)', value: "'Amiri', serif" },
+    { name: 'الرقعة (Aref Ruqaa)', value: "'Aref Ruqaa', serif" },
+    { name: 'المسيري (El Messiri)', value: "'El Messiri', sans-serif" },
+    { name: 'شانغا (Changa)', value: "'Changa', sans-serif" },
+    { name: 'آي بي إم عربي (IBM Plex)', value: "'IBM Plex Sans Arabic', sans-serif" },
+    { name: 'ريدكس برو (Readex Pro)', value: "'Readex Pro', sans-serif" },
+    { name: 'مادة (Mada)', value: "'Mada', sans-serif" },
+    { name: 'نوتو نسخ (Noto Naskh)', value: "'Noto Naskh Arabic', serif" },
+    { name: 'نوتو سانس عربي (Noto Sans)', value: "'Noto Sans Arabic', sans-serif" },
+    { name: 'هارمتان (Harmattan)', value: "'Harmattan', sans-serif" },
+    { name: 'لاتيف (Lateef)', value: "'Lateef', serif" },
+    { name: 'ميرزا (Mirza)', value: "'Mirza', serif" },
+    { name: 'جولزار (Gulzar)', value: "'Gulzar', serif" },
+    { name: 'كاتبة (Katibeh)', value: "'Katibeh', serif" },
+    { name: 'لاله زار (Lalezar)', value: "'Lalezar', cursive" },
+    { name: 'رقاص (Rakkas)', value: "'Rakkas', cursive" },
+    { name: 'ليمونادة (Lemonada)', value: "'Lemonada', cursive" },
+    { name: 'قاهري (Qahiri)', value: "'Qahiri', sans-serif" },
+    { name: 'روبيك ديرت (Rubik Dirt)', value: "'Rubik Dirt', cursive" },
+    { name: 'فايبس (Vibes)', value: "'Vibes', cursive" }
+  ];
+
+  const COLORS = [
+    '#f8fafc',
+    '#34d399',
+    '#38bdf8',
+    '#fbbf24',
+    '#f472b6',
+    '#a78bfa',
+    '#fb7185',
+    '#e2e8f0'
+  ];
+
+  const state = {
+    count: 0,
+    target: 33,
+    dhikr: DEFAULT_ADHKAR[0],
+    customAdhkar: [],
+    bubbleSize: 96,
+    bubbleAlpha: 28,
+    dhikrSize: 64,
+    dhikrFont: FONTS[0].value,
+    dhikrColor: COLORS[0],
+    bubbleX: null,
+    bubbleY: null
+  };
+
+  function loadState() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+      if (saved && typeof saved === 'object') {
+        Object.assign(state, saved);
+      }
+    } catch (_) {}
+    if (!Array.isArray(state.customAdhkar)) state.customAdhkar = [];
+    if (Number(state.dhikrSize) < 64) state.dhikrSize = 64;
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (_) {}
+  }
+
+  function normalizeText(str) {
+    return (str || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function countWords(str) {
+    const clean = normalizeText(str);
+    return clean ? clean.split(' ').length : 0;
+  }
+
+  function shouldUseInvertedTriangle(text) {
+    const clean = normalizeText(text);
+    if (clean === 'اللهم صل وسلم على نبينا محمد') return true;
+    return countWords(clean) >= 7;
+  }
+
+  function buildInvertedTriangleNodes(text) {
+    const words = normalizeText(text).split(' ');
+    const lines = [];
+    let idx = 0;
+    let take = Math.max(2, Math.ceil(words.length / 2));
+
+    while (idx < words.length) {
+      const countToTake = Math.min(take, words.length - idx);
+      lines.push(words.slice(idx, idx + countToTake).join(' '));
+      idx += countToTake;
+      take = Math.max(1, take - 1);
+    }
+
+    const wrap = document.createElement('div');
+    wrap.className = 'floating-dhikr inverted-triangle';
+    lines.forEach((lineText) => {
+      const lineEl = document.createElement('span');
+      lineEl.className = 'tri-line';
+      lineEl.textContent = lineText;
+      wrap.appendChild(lineEl);
+    });
+    return wrap;
+  }
+
+  const stage = document.getElementById('stage');
+  const bubble = document.getElementById('bubble');
+  const bubbleGear = document.getElementById('bubble-gear');
+  const bubbleCount = document.getElementById('bubble-count');
+  const bubbleTarget = document.getElementById('bubble-target');
+  const backdrop = document.getElementById('settings-backdrop');
+  const closeSettings = document.getElementById('close-settings');
+  const dhikrSelect = document.getElementById('dhikr-select');
+  const customInput = document.getElementById('custom-dhikr-input');
+  const addDhikrBtn = document.getElementById('add-dhikr-btn');
+  const customList = document.getElementById('custom-dhikr-list');
+  const targetInput = document.getElementById('target-input');
+  const targetBadge = document.getElementById('target-badge');
+  const resetCountBtn = document.getElementById('reset-count-btn');
+  const bubbleSizeRange = document.getElementById('bubble-size-range');
+  const bubbleSizeVal = document.getElementById('bubble-size-val');
+  const bubbleAlphaRange = document.getElementById('bubble-alpha-range');
+  const bubbleAlphaVal = document.getElementById('bubble-alpha-val');
+  const dhikrSizeRange = document.getElementById('dhikr-size-range');
+  const dhikrSizeVal = document.getElementById('dhikr-size-val');
+  const fontSelect = document.getElementById('font-select');
+  const colorSwatches = document.getElementById('color-swatches');
+
+  function populateSelectors() {
+    fontSelect.innerHTML = '';
+    FONTS.forEach((f) => {
+      const opt = document.createElement('option');
+      opt.value = f.value;
+      opt.textContent = f.name;
+      fontSelect.appendChild(opt);
+    });
+
+    colorSwatches.innerHTML = '';
+    COLORS.forEach((hex) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'swatch';
+      btn.style.backgroundColor = hex;
+      btn.title = hex;
+      btn.addEventListener('click', () => {
+        state.dhikrColor = hex;
+        applyStyles();
+        saveState();
+      });
+      colorSwatches.appendChild(btn);
+    });
+  }
+
+  function refreshAdhkarOptions() {
+    const all = [...DEFAULT_ADHKAR, ...state.customAdhkar];
+    if (!all.includes(state.dhikr)) {
+      state.dhikr = all[0] || DEFAULT_ADHKAR[0];
+    }
+
+    dhikrSelect.innerHTML = '';
+    all.forEach((item) => {
+      const opt = document.createElement('option');
+      opt.value = item;
+      opt.textContent = item;
+      dhikrSelect.appendChild(opt);
+    });
+    dhikrSelect.value = state.dhikr;
+
+    customList.innerHTML = '';
+    state.customAdhkar.forEach((item, i) => {
+      const row = document.createElement('div');
+      row.className = 'custom-item';
+
+      const txt = document.createElement('span');
+      txt.textContent = item;
+      txt.addEventListener('click', () => {
+        state.dhikr = item;
+        dhikrSelect.value = item;
+        applyStyles();
+        saveState();
+      });
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'del-chip';
+      del.textContent = '✕';
+      del.addEventListener('click', () => {
+        state.customAdhkar.splice(i, 1);
+        refreshAdhkarOptions();
+        saveState();
+      });
+
+      row.appendChild(txt);
+      row.appendChild(del);
+      customList.appendChild(row);
+    });
+  }
+
+  function clampBubblePosition() {
+    const size = Number(state.bubbleSize) || 96;
+    const maxX = Math.max(8, window.innerWidth - size - 8);
+    const maxY = Math.max(8, window.innerHeight - size - 8);
+
+    if (typeof state.bubbleX !== 'number' || Number.isNaN(state.bubbleX)) {
+      state.bubbleX = 24;
+    }
+    if (typeof state.bubbleY !== 'number' || Number.isNaN(state.bubbleY)) {
+      state.bubbleY = Math.round(window.innerHeight * 0.42);
+    }
+
+    state.bubbleX = Math.min(Math.max(8, state.bubbleX), maxX);
+    state.bubbleY = Math.min(Math.max(8, state.bubbleY), maxY);
+
+    bubble.style.left = `${state.bubbleX}px`;
+    bubble.style.top = `${state.bubbleY}px`;
+  }
+
+  function applyStyles() {
+    const bSize = Math.min(150, Math.max(64, Number(state.bubbleSize) || 96));
+    const bAlpha = Math.min(90, Math.max(5, Number(state.bubbleAlpha) || 28));
+    const dSize = Math.min(120, Math.max(64, Number(state.dhikrSize) || 64));
+
+    state.bubbleSize = bSize;
+    state.bubbleAlpha = bAlpha;
+    state.dhikrSize = dSize;
+
+    document.documentElement.style.setProperty('--bubble-size', `${bSize}px`);
+    document.documentElement.style.setProperty('--bubble-alpha', (bAlpha / 100).toFixed(2));
+    document.documentElement.style.setProperty('--dhikr-size', `${dSize}px`);
+    document.documentElement.style.setProperty('--dhikr-color', state.dhikrColor || COLORS[0]);
+    document.documentElement.style.setProperty('--dhikr-font', state.dhikrFont || FONTS[0].value);
+
+    bubbleCount.textContent = String(state.count || 0);
+    bubbleTarget.textContent = `/ ${state.target || 33}`;
+    targetBadge.textContent = `الهدف: ${state.target || 33}`;
+    targetInput.value = String(state.target || 33);
+
+    bubbleSizeRange.value = String(bSize);
+    bubbleSizeVal.textContent = `${bSize}px`;
+    bubbleAlphaRange.value = String(bAlpha);
+    bubbleAlphaVal.textContent = `${bAlpha}%`;
+    dhikrSizeRange.value = String(dSize);
+    dhikrSizeVal.textContent = `${dSize}px`;
+    fontSelect.value = state.dhikrFont || FONTS[0].value;
+
+    document.querySelectorAll('.swatch').forEach((el) => {
+      el.classList.toggle('active', el.title.toLowerCase() === String(state.dhikrColor).toLowerCase());
+    });
+
+    clampBubblePosition();
+  }
+
+  function spawnFloatingDhikr() {
+    const text = state.dhikr || DEFAULT_ADHKAR[0];
+    let el;
+    if (shouldUseInvertedTriangle(text)) {
+      el = buildInvertedTriangleNodes(text);
+    } else {
+      el = document.createElement('div');
+      el.className = 'floating-dhikr';
+      el.textContent = text;
+    }
+
+    const rect = bubble.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const startY = Math.max(70, rect.top - 10);
+
+    el.style.left = `${centerX}px`;
+    el.style.top = `${startY}px`;
+    stage.appendChild(el);
+
+    el.addEventListener('animationend', () => {
+      el.remove();
+    }, { once: true });
+  }
+
+  let dragState = null;
+
+  bubble.addEventListener('pointerdown', (e) => {
+    if (e.target === bubbleGear) return;
+    bubble.setPointerCapture(e.pointerId);
+    dragState = {
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      origX: state.bubbleX,
+      origY: state.bubbleY,
+      moved: false
+    };
+  });
+
+  bubble.addEventListener('pointermove', (e) => {
+    if (!dragState || dragState.pointerId !== e.pointerId) return;
+    const dx = e.clientX - dragState.startX;
+    const dy = e.clientY - dragState.startY;
+    if (Math.hypot(dx, dy) > 6) {
+      dragState.moved = true;
+    }
+    if (dragState.moved) {
+      state.bubbleX = dragState.origX + dx;
+      state.bubbleY = dragState.origY + dy;
+      clampBubblePosition();
+    }
+  });
+
+  bubble.addEventListener('pointerup', (e) => {
+    if (!dragState || dragState.pointerId !== e.pointerId) return;
+    const wasMoved = dragState.moved;
+    dragState = null;
+    if (!wasMoved) {
+      state.count = (Number(state.count) || 0) + 1;
+      bubbleCount.textContent = String(state.count);
+      spawnFloatingDhikr();
+      saveState();
+    } else {
+      saveState();
+    }
+  });
+
+  bubbleGear.addEventListener('click', (e) => {
+    e.stopPropagation();
+    backdrop.classList.add('open');
+  });
+
+  closeSettings.addEventListener('click', () => {
+    backdrop.classList.remove('open');
+  });
+
+  backdrop.addEventListener('click', (e) => {
+    if (e.target === backdrop) {
+      backdrop.classList.remove('open');
+    }
+  });
+
+  dhikrSelect.addEventListener('change', () => {
+    state.dhikr = dhikrSelect.value;
+    saveState();
+  });
+
+  addDhikrBtn.addEventListener('click', () => {
+    const val = normalizeText(customInput.value);
+    if (!val) return;
+    if (!state.customAdhkar.includes(val) && !DEFAULT_ADHKAR.includes(val)) {
+      state.customAdhkar.push(val);
+    }
+    state.dhikr = val;
+    customInput.value = '';
+    refreshAdhkarOptions();
+    saveState();
+  });
+
+  targetInput.addEventListener('change', () => {
+    const num = parseInt(targetInput.value, 10);
+    state.target = Number.isFinite(num) && num > 0 ? num : 33;
+    applyStyles();
+    saveState();
+  });
+
+  resetCountBtn.addEventListener('click', () => {
+    state.count = 0;
+    applyStyles();
+    saveState();
+  });
+
+  bubbleSizeRange.addEventListener('input', () => {
+    state.bubbleSize = Number(bubbleSizeRange.value);
+    applyStyles();
+    saveState();
+  });
+
+  bubbleAlphaRange.addEventListener('input', () => {
+    state.bubbleAlpha = Number(bubbleAlphaRange.value);
+    applyStyles();
+    saveState();
+  });
+
+  dhikrSizeRange.addEventListener('input', () => {
+    state.dhikrSize = Number(dhikrSizeRange.value);
+    applyStyles();
+    saveState();
+  });
+
+  fontSelect.addEventListener('change', () => {
+    state.dhikrFont = fontSelect.value;
+    applyStyles();
+    saveState();
+  });
+
+  window.addEventListener('resize', clampBubblePosition);
+
+  loadState();
+  populateSelectors();
+  refreshAdhkarOptions();
+  applyStyles();
+})();
+</script>
+</body>
+</html>
