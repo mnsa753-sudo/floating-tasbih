@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>السبحة العائمة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:wght@400;700&family=Aref+Ruqaa:wght@400;700&family=Blaka&family=Cairo:wght@500;700&family=Changa:wght@500;700&family=El+Messiri:wght@500;700&family=Harmattan:wght@500;700&family=IBM+Plex+Sans+Arabic:wght@500;700&family=Katibeh&family=Lalezar&family=Lateef:wght@500;700&family=Lemonada:wght@500;700&family=Mada:wght@500;700&family=Markazi+Text:wght@500;700&family=Mirza:wght@500;700&family=Noto+Kufi+Arabic:wght@500;700&family=Noto+Naskh+Arabic:wght@500;700&family=Qahiri&family=Rakkas&family=Reem+Kufi:wght@500;700&family=Scheherazade+New:wght@500;700&family=Tajawal:wght@500;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bubble-size: 230px;
+    --bubble-opacity: 0.96;
+    --dhikr-color: #f4efe6;
+    --dhikr-size: 28px;
+    --dhikr-x: 50%;
+    --dhikr-start-y: 88%;
+    --dhikr-end-y: 12%;
+    --dhikr-font: 'Amiri', serif;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: radial-gradient(circle at center, #0e2221 0%, #071313 100%);
+    font-family: 'Tajawal', sans-serif;
+    color: #f4efe6;
+  }
+
+  /* منطقة عرض الذكر الصاعد */
+  #dhikr-stage {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 20;
+  }
+
+  .floating-dhikr {
+    position: absolute;
+    left: var(--dhikr-x);
+    top: var(--dhikr-start-y);
+    transform: translate(-50%, -50%);
+    color: var(--dhikr-color);
+    font-size: var(--dhikr-size);
+    font-family: var(--dhikr-font);
+    font-weight: 700;
+    white-space: nowrap;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.75);
+    animation: riseAndFade 1.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    will-change: top, opacity, transform;
+  }
+
+  @keyframes riseAndFade {
+    0% {
+      top: var(--dhikr-start-y);
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.88);
+    }
+    18% {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    80% {
+      opacity: 0.92;
+    }
+    100% {
+      top: var(--dhikr-end-y);
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(1.06);
+    }
+  }
+
+  /* حاوية الفقاعة في المنتصف */
+  .center-wrapper {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+
+  .tasbih-bubble {
+    position: relative;
+    width: var(--bubble-size);
+    height: var(--bubble-size);
+    border-radius: 50%;
+    opacity: var(--bubble-opacity);
+    background: radial-gradient(circle at 35% 30%, rgba(44, 68, 66, 0.58) 0%, rgba(16, 31, 30, 0.88) 72%, rgba(28, 46, 45, 0.95) 100%);
+    border: 2.2px solid rgba(185, 200, 198, 0.52);
+    box-shadow:
+      0 14px 35px rgba(0, 0, 0, 0.65),
+      inset 0 0 24px rgba(255, 255, 255, 0.08),
+      inset 0 -10px 25px rgba(0, 0, 0, 0.45);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.1s ease, width 0.15s ease, height 0.15s ease;
+  }
+
+  .tasbih-bubble:active {
+    transform: scale(0.965);
+  }
+
+  /* دوران دورة كاملة عند اكتمال الـ 33 حبيبة */
+  .tasbih-bubble.spin-complete {
+    animation: fullSpin 0.85s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes fullSpin {
+    0% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.05); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+
+  #beads-ring {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .bead {
+    position: absolute;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: background-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+  }
+
+  .bead.inactive {
+    background-color: rgba(110, 124, 123, 0.48) !important;
+    box-shadow: none !important;
+  }
+
+  .bead.active {
+    transform: translate(-50%, -50%) scale(1.06);
+  }
+
+  .counter-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    pointer-events: none;
+    line-height: 1.05;
+  }
+
+  #total-count {
+    font-size: calc(var(--bubble-size) * 0.26);
+    font-weight: 700;
+    color: #f3eee3;
+    font-family: 'Cairo', 'Tajawal', sans-serif;
+    letter-spacing: -1px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  }
+
+  #cycle-count {
+    margin-top: 4px;
+    font-size: calc(var(--bubble-size) * 0.082);
+    color: rgba(235, 232, 224, 0.72);
+    font-family: 'Cairo', sans-serif;
+    font-weight: 500;
+    direction: ltr;
+  }
+
+  /* أزرار التحكم العلوية الخفيفة */
+  .top-bar {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 30;
+    pointer-events: none;
+  }
+
+  .top-actions {
+    display: flex;
+    gap: 8px;
+    pointer-events: auto;
+  }
+
+  .icon-btn {
+    background: rgba(18, 36, 35, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #f4efe6;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-family: 'Tajawal', sans-serif;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .icon-btn:active {
+    transform: scale(0.95);
+  }
+
+  .current-dhikr-pill {
+    pointer-events: auto;
+    background: rgba(18, 36, 35, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 13px;
+    max-width: 55vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  /* لوحة الإعدادات القابلة للطي */
+  #settings-drawer {
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 13, 13, 0.88);
+    backdrop-filter: blur(10px);
+    z-index: 50;
+    display: none;
+    flex-direction: column;
+    padding: 14px;
+    overflow-y: auto;
+  }
+
+  #settings-drawer.open {
+    display: flex;
+  }
+
+  .drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+  }
+
+  .drawer-header h3 {
+    margin: 0;
+    font-size: 17px;
+  }
+
+  .section-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #7ee8d2;
+    margin-bottom: 10px;
+  }
+
+  .control-row {
+    margin-bottom: 10px;
+  }
+
+  .control-row label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 4px;
+    color: #dce4e3;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: #2dd4bf;
+  }
+
+  select, input[type="text"] {
+    width: 100%;
+    background: rgba(10, 22, 22, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 8px 10px;
+    border-radius: 10px;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 14px;
+  }
+
+  .color-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  input[type="color"] {
+    width: 44px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .swatch {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.4);
+    cursor: pointer;
+  }
+
+  .add-dhikr-box {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .btn-primary {
+    background: #14b8a6;
+    color: #041312;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-weight: 700;
+    font-family: 'Tajawal', sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .dhikr-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+
+  .dhikr-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 7px 10px;
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .dhikr-item.selected {
+    border-color: #2dd4bf;
+    background: rgba(45, 212, 191, 0.14);
+  }
+
+  .del-btn {
+    background: rgba(239, 68, 68, 0.22);
+    color: #fca5a5;
+    border: none;
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+  <!-- الشريط العلوي -->
+  <div class="top-bar">
+    <div class="current-dhikr-pill" id="active-dhikr-label" title="اضغط للتبديل للذكر التالي">سبحان الله</div>
+    <div class="top-actions">
+      <button class="icon-btn" id="sound-toggle" title="الصوت">🔊</button>
+      <button class="icon-btn" id="reset-btn" title="تصفير العداد">↺</button>
+      <button class="icon-btn" id="open-settings">⚙️</button>
+    </div>
+  </div>
+
+  <!-- مسرح صعود الذكر من الأسفل للأعلى -->
+  <div id="dhikr-stage"></div>
+
+  <!-- الفقاعة الرئيسية -->
+  <div class="center-wrapper">
+    <div class="tasbih-bubble" id="bubble">
+      <div id="beads-ring"></div>
+      <div class="counter-content">
+        <div id="total-count">0</div>
+        <div id="cycle-count">0 / 33</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- لوحة التحكم والإعدادات -->
+  <div id="settings-drawer">
+    <div class="drawer-header">
+      <h3>إعدادات السبحة والذكر</h3>
+      <button class="icon-btn" id="close-settings">✕ إغلاق</button>
+    </div>
+
+    <!-- الأذكار وإضافة ذكر جديد -->
+    <div class="section-card">
+      <div class="section-title">الأذكار وإضافة ذكر جديد</div>
+      <div class="add-dhikr-box">
+        <input type="text" id="new-dhikr-input" placeholder="اكتب الذكر الجديد هنا..." />
+        <button class="btn-primary" id="add-dhikr-btn">+ إضافة</button>
+      </div>
+      <div class="dhikr-list" id="dhikr-list"></div>
+    </div>
+
+    <!-- الخطوط العربية (أكثر من 20 خطاً) -->
+    <div class="section-card">
+      <div class="section-title">خط الذكر (22 خطاً عربياً)</div>
+      <select id="font-select"></select>
+    </div>
+
+    <!-- حجم ولون ومكان الذكر -->
+    <div class="section-card">
+      <div class="section-title">حجم ولون ومكان الذكر</div>
+
+      <div class="control-row">
+        <label><span>لون الذكر (مؤشر الألوان)</span></label>
+        <div class="color-row">
+          <input type="color" id="dhikr-color-picker" value="#f4efe6" />
+          <div class="swatch" style="background:#f4efe6" data-color="#f4efe6"></div>
+          <div class="swatch" style="background:#38f2af" data-color="#38f2af"></div>
+          <div class="swatch" style="background:#38bdf8" data-color="#38bdf8"></div>
+          <div class="swatch" style="background:#facc15" data-color="#facc15"></div>
+          <div class="swatch" style="background:#fb7185" data-color="#fb7185"></div>
+          <div class="swatch" style="background:#c084fc" data-color="#c084fc"></div>
+        </div>
+      </div>
+
+      <div class="control-row">
+        <label><span>حجم خط الذكر</span><span id="val-dhikr-size">28px</span></label>
+        <input type="range" id="dhikr-size-range" min="16" max="54" value="28" />
+      </div>
+
+      <div class="control-row">
+        <label><span>الموضع الأفقي للذكر (يمين / يسار)</span><span id="val-dhikr-x">50%</span></label>
+        <input type="range" id="dhikr-x-range" min="15" max="85" value="50" />
+      </div>
+
+      <div class="control-row">
+        <label><span>نقطة بداية صعود الذكر من الأسفل</span><span id="val-dhikr-start">88%</span></label>
+        <input type="range" id="dhikr-start-range" min="55" max="96" value="88" />
+      </div>
+
+      <div class="control-row">
+        <label><span>نقطة اختفاء الذكر في الأعلى</span><span id="val-dhikr-end">12%</span></label>
+        <input type="range" id="dhikr-end-range" min="4" max="45" value="12" />
+      </div>
+    </div>
+
+    <!-- حجم وشفافية الفقاعة -->
+    <div class="section-card">
+      <div class="section-title">حجم وشفافية الفقاعة</div>
+      <div class="control-row">
+        <label><span>حجم الفقاعة</span><span id="val-bubble-size">230px</span></label>
+        <input type="range" id="bubble-size-range" min="140" max="340" value="230" />
+      </div>
+      <div class="control-row">
+        <label><span>شفافية الفقاعة</span><span id="val-bubble-opacity">96%</span></label>
+        <input type="range" id="bubble-opacity-range" min="25" max="100" value="96" />
+      </div>
+    </div>
+  </div>
+
+<script>
+  const TOTAL_BEADS = 33;
+
+  // قائمة 22 خطاً عربياً من بينها الكوفي، العثماني، النسخ، الرقعة وغيرها
+  const ARABIC_FONTS = [
+    { name: "1. الخط الكوفي (Noto Kufi Arabic)", value: "'Noto Kufi Arabic', sans-serif" },
+    { name: "2. الخط الكوفي الهندسي (Reem Kufi)", value: "'Reem Kufi', sans-serif" },
+    { name: "3. الخط العثماني / المصحفي (Amiri Quran)", value: "'Amiri Quran', serif" },
+    { name: "4. خط النسخ الأميري (Amiri)", value: "'Amiri', serif" },
+    { name: "5. خط النسخ الواضح (Noto Naskh Arabic)", value: "'Noto Naskh Arabic', serif" },
+    { name: "6. خط الرقعة (Aref Ruqaa)", value: "'Aref Ruqaa', serif" },
+    { name: "7. خط الإجازة / الثلث (Rakkas)", value: "'Rakkas', serif" },
+    { name: "8. الخط الفارسي / النستعليق (Mirza)", value: "'Mirza', serif" },
+    { name: "9. خط المسيري الأندلسي (El Messiri)", value: "'El Messiri', sans-serif" },
+    { name: "10. خط شهرزاد الكلاسيكي (Scheherazade New)", value: "'Scheherazade New', serif" },
+    { name: "11. خط لطيف التراثي (Lateef)", value: "'Lateef', serif" },
+    { name: "12. خط كتيبة المزخرف (Katibeh)", value: "'Katibeh', serif" },
+    { name: "13. خط قاهري الكوفي المربع (Qahiri)", value: "'Qahiri', sans-serif" },
+    { name: "14. خط بلاكا التراثي (Blaka)", value: "'Blaka', serif" },
+    { name: "15. خط ليمونادة المرن (Lemonada)", value: "'Lemonada', cursive" },
+    { name: "16. خط لاليزار العريض (Lalezar)", value: "'Lalezar', cursive" },
+    { name: "17. خط مركزي (Markazi Text)", value: "'Markazi Text', serif" },
+    { name: "18. خط هارماتان المغربي (Harmattan)", value: "'Harmattan', sans-serif" },
+    { name: "19. خط تجوال الحديث (Tajawal)", value: "'Tajawal', sans-serif" },
+    { name: "20. خط القاهرة (Cairo)", value: "'Cairo', sans-serif" },
+    { name: "21. خط شنجا (Changa)", value: "'Changa', sans-serif" },
+    { name: "22. خط آي بي إم العربي (IBM Plex Sans Arabic)", value: "'IBM Plex Sans Arabic', sans-serif" }
+  ];
+
+  // ألوان الحبيبات الـ 33 مطابقة لتدرج الصورة المرفقة
+  const BEAD_COLORS = [
+    "#2ce6a8", "#3598f5", "#6a6ef7", "#a84bf5", "#ec4899", "#f43f5e",
+    "#f97316", "#f59e0b", "#eab308", "#84cc16", "#22c55e", "#10b981",
+    "#2dd4bf", "#38bdf8", "#6366f1", "#a855f7", "#ec4899", "#ef4444",
+    "#fb923c", "#facc15", "#a3e635", "#34d399", "#22d3ee", "#60a5fa",
+    "#818cf8", "#c084fc", "#f472b6", "#fb7185", "#f97316", "#eab308",
+    "#4ade80", "#2dd4bf", "#f43f5e"
+  ];
+
+  const DEFAULT_STATE = {
+    total: 0,
+    cycle: 0,
+    sound: true,
+    bubbleSize: 230,
+    bubbleOpacity: 96,
+    dhikrColor: "#f4efe6",
+    dhikrSize: 28,
+    dhikrX: 50,
+    dhikrStartY: 88,
+    dhikrEndY: 12,
+    fontIndex: 0,
+    selectedDhikrIndex: 0,
+    dhikrs: [
+      "سبحان الله",
+      "الحمد لله",
+      "لا إله إلا الله",
+      "الله أكبر",
+      "أستغفر الله العظيم",
+      "سبحان الله وبحمده",
+      "سبحان الله العظيم",
+      "لا حول ولا قوة إلا بالله",
+      "اللهم صل وسلم على نبينا محمد"
+    ]
+  };
+
+  let state = { ...DEFAULT_STATE, ...JSON.parse(localStorage.getItem("floating_tasbih_v1") || "{}") };
+  if (!Array.isArray(state.dhikrs) || state.dhikrs.length === 0) {
+    state.dhikrs = [...DEFAULT_STATE.dhikrs];
+  }
+
+  function saveState() {
+    localStorage.setItem("floating_tasbih_v1", JSON.stringify(state));
+  }
+
+  // صوت نقرة خفيف وناعم بدون ملفات خارجية
+  let audioCtx = null;
+  function playSoftClick(isComplete = false) {
+    if (!state.sound) return;
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      const now = audioCtx.currentTime;
+
+      if (isComplete) {
+        osc.frequency.setValueAtTime(520, now);
+        osc.frequency.exponentialRampToValueAtTime(780, now + 0.14);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+      } else {
+        osc.frequency.setValueAtTime(640, now);
+        osc.frequency.exponentialRampToValueAtTime(240, now + 0.045);
+        gain.gain.setValueAtTime(0.055, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      }
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + (isComplete ? 0.17 : 0.055));
+    } catch (e) {}
+  }
+
+  // عناصر الواجهة
+  const bubble = document.getElementById("bubble");
+  const beadsRing = document.getElementById("beads-ring");
+  const totalCountEl = document.getElementById("total-count");
+  const cycleCountEl = document.getElementById("cycle-count");
+  const dhikrStage = document.getElementById("dhikr-stage");
+  const activeDhikrLabel = document.getElementById("active-dhikr-label");
+  const soundToggleBtn = document.getElementById("sound-toggle");
+
+  // بناء الحبيبات الـ 33 على حواف الدائرة
+  const beadElements = [];
+  function buildBeads() {
+    beadsRing.innerHTML = "";
+    beadElements.length = 0;
+    const size = state.bubbleSize;
+    const radius = (size / 2) - (size * 0.072);
+    const beadDiameter = Math.max(7, size * 0.044);
+
+    for (let i = 0; i < TOTAL_BEADS; i++) {
+      // البدء من أعلى المنتصف (-90 درجة) باتجاه عقارب الساعة مثل الصورة
+      const angleDeg = -90 + (i * (360 / TOTAL_BEADS));
+      const angleRad = (angleDeg * Math.PI) / 180;
+      const x = (size / 2) + radius * Math.cos(angleRad);
+      const y = (size / 2) + radius * Math.sin(angleRad);
+
+      const dot = document.createElement("div");
+      dot.className = "bead inactive";
+      dot.style.width = `${beadDiameter}px`;
+      dot.style.height = `${beadDiameter}px`;
+      dot.style.left = `${x}px`;
+      dot.style.top = `${y}px`;
+      const color = BEAD_COLORS[i % BEAD_COLORS.length];
+      dot.dataset.color = color;
+      beadsRing.appendChild(dot);
+      beadElements.push(dot);
+    }
+    updateBeadsVisual();
+  }
+
+  function updateBeadsVisual() {
+    beadElements.forEach((dot, idx) => {
+      if (idx < state.cycle) {
+        const c = dot.dataset.color;
+        dot.classList.remove("inactive");
+        dot.classList.add("active");
+        dot.style.backgroundColor = c;
+        dot.style.boxShadow = `0 0 8px ${c}`;
+      } else {
+        dot.classList.remove("active");
+        dot.classList.add("inactive");
+        dot.style.backgroundColor = "";
+        dot.style.boxShadow = "";
+      }
+    });
+    totalCountEl.textContent = state.total;
+    cycleCountEl.textContent = `${state.cycle} / ${TOTAL_BEADS}`;
+  }
+
+  function spawnFloatingDhikr() {
+    const text = state.dhikrs[state.selectedDhikrIndex] || "سبحان الله";
+    const el = document.createElement("div");
+    el.className = "floating-dhikr";
+    el.textContent = text;
+    dhikrStage.appendChild(el);
+    el.addEventListener("animationend", () => el.remove());
+  }
+
+  function triggerFullRotation() {
+    bubble.classList.remove("spin-complete");
+    void bubble.offsetWidth;
+    bubble.classList.add("spin-complete");
+  }
+
+  // الضغط على الفقاعة للتسبيح
+  bubble.addEventListener("click", () => {
+    state.total += 1;
+    state.cycle += 1;
+
+    spawnFloatingDhikr();
+
+    if (state.cycle >= TOTAL_BEADS) {
+      // تلوين الحبيبة الأخيرة رقم 33 وإظهار 33/33 لحظياً مع الدوران الكامل
+      updateBeadsVisual();
+      playSoftClick(true);
+      triggerFullRotation();
+
+      setTimeout(() => {
+        state.cycle = 0;
+        updateBeadsVisual();
+        saveState();
+      }, 650);
+    } else {
+      playSoftClick(false);
+      updateBeadsVisual();
+      saveState();
+    }
+  });
+
+  // تطبيق الإعدادات البصرية
+  function applyVisualSettings() {
+    const root = document.documentElement.style;
+    root.setProperty("--bubble-size", `${state.bubbleSize}px`);
+    root.setProperty("--bubble-opacity", (state.bubbleOpacity / 100).toFixed(2));
+    root.setProperty("--dhikr-color", state.dhikrColor);
+    root.setProperty("--dhikr-size", `${state.dhikrSize}px`);
+    root.setProperty("--dhikr-x", `${state.dhikrX}%`);
+    root.setProperty("--dhikr-start-y", `${state.dhikrStartY}%`);
+    root.setProperty("--dhikr-end-y", `${state.dhikrEndY}%`);
+
+    const chosenFont = ARABIC_FONTS[state.fontIndex] || ARABIC_FONTS[0];
+    root.setProperty("--dhikr-font", chosenFont.value);
+
+    activeDhikrLabel.textContent = state.dhikrs[state.selectedDhikrIndex] || "سبحان الله";
+    activeDhikrLabel.style.fontFamily = chosenFont.value;
+    soundToggleBtn.textContent = state.sound ? "🔊" : "🔇";
+
+    document.getElementById("val-bubble-size").textContent = `${state.bubbleSize}px`;
+    document.getElementById("val-bubble-opacity").textContent = `${state.bubbleOpacity}%`;
+    document.getElementById("val-dhikr-size").textContent = `${state.dhikrSize}px`;
+    document.getElementById("val-dhikr-x").textContent = `${state.dhikrX}%`;
+    document.getElementById("val-dhikr-start").textContent = `${state.dhikrStartY}%`;
+    document.getElementById("val-dhikr-end").textContent = `${state.dhikrEndY}%`;
+
+    buildBeads();
+  }
+
+  // تعبئة قائمة الخطوط الـ 22
+  const fontSelect = document.getElementById("font-select");
+  ARABIC_FONTS.forEach((f, idx) => {
+    const opt = document.createElement("option");
+    opt.value = idx;
+    opt.textContent = f.name;
+    opt.style.fontFamily = f.value;
+    fontSelect.appendChild(opt);
+  });
+  fontSelect.value = state.fontIndex;
+  fontSelect.addEventListener("change", (e) => {
+    state.fontIndex = Number(e.target.value);
+    applyVisualSettings();
+    saveState();
+  });
+
+  // إدارة قائمة الأذكار
+  const dhikrListEl = document.getElementById("dhikr-list");
+  function renderDhikrList() {
+    dhikrListEl.innerHTML = "";
+    state.dhikrs.forEach((text, idx) => {
+      const row = document.createElement("div");
+      row.className = "dhikr-item" + (idx === state.selectedDhikrIndex ? " selected" : "");
+
+      const span = document.createElement("span");
+      span.textContent = text;
+      row.appendChild(span);
+
+      if (state.dhikrs.length > 1) {
+        const del = document.createElement("button");
+        del.className = "del-btn";
+        del.textContent = "حذف";
+        del.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          state.dhikrs.splice(idx, 1);
+          if (state.selectedDhikrIndex >= state.dhikrs.length) {
+            state.selectedDhikrIndex = 0;
+          }
+          renderDhikrList();
+          applyVisualSettings();
+          saveState();
+        });
+        row.appendChild(del);
+      }
+
+      row.addEventListener("click", () => {
+        state.selectedDhikrIndex = idx;
+        renderDhikrList();
+        applyVisualSettings();
+        saveState();
+      });
+
+      dhikrListEl.appendChild(row);
+    });
+  }
+
+  document.getElementById("add-dhikr-btn").addEventListener("click", () => {
+    const inp = document.getElementById("new-dhikr-input");
+    const val = inp.value.trim();
+    if (!val) return;
+    state.dhikrs.unshift(val);
+    state.selectedDhikrIndex = 0;
+    inp.value = "";
+    renderDhikrList();
+    applyVisualSettings();
+    saveState();
+  });
+
+  // التبديل السريع بين الأذكار بالضغط على اسم الذكر في الأعلى
+  activeDhikrLabel.addEventListener("click", () => {
+    state.selectedDhikrIndex = (state.selectedDhikrIndex + 1) % state.dhikrs.length;
+    renderDhikrList();
+    applyVisualSettings();
+    saveState();
+  });
+
+  // ربط أشرطة التمرير ومؤشر الألوان
+  const colorPicker = document.getElementById("dhikr-color-picker");
+  colorPicker.value = state.dhikrColor;
+  colorPicker.addEventListener("input", (e) => {
+    state.dhikrColor = e.target.value;
+    applyVisualSettings();
+    saveState();
+  });
+
+  document.querySelectorAll(".swatch").forEach((sw) => {
+    sw.addEventListener("click", () => {
+      state.dhikrColor = sw.dataset.color;
+      colorPicker.value = state.dhikrColor;
+      applyVisualSettings();
+      saveState();
+    });
+  });
+
+  function bindRange(id, key) {
+    const el = document.getElementById(id);
+    el.value = state[key];
+    el.addEventListener("input", (e) => {
+      state[key] = Number(e.target.value);
+      applyVisualSettings();
+      saveState();
+    });
+  }
+
+  bindRange("bubble-size-range", "bubbleSize");
+  bindRange("bubble-opacity-range", "bubbleOpacity");
+  bindRange("dhikr-size-range", "dhikrSize");
+  bindRange("dhikr-x-range", "dhikrX");
+  bindRange("dhikr-start-range", "dhikrStartY");
+  bindRange("dhikr-end-range", "dhikrEndY");
+
+  soundToggleBtn.addEventListener("click", () => {
+    state.sound = !state.sound;
+    applyVisualSettings();
+    saveState();
+  });
+
+  document.getElementById("reset-btn").addEventListener("click", () => {
+    if (confirm("هل تريد تصفير العداد والحبيبات؟")) {
+      state.total = 0;
+      state.cycle = 0;
+      updateBeadsVisual();
+      saveState();
+    }
+  });
+
+  const drawer = document.getElementById("settings-drawer");
+  document.getElementById("open-settings").addEventListener("click", () => drawer.classList.add("open"));
+  document.getElementById("close-settings").addEventListener("click", () => drawer.classList.remove("open"));
+
+  // التشغيل الأولي
+  renderDhikrList();
+  applyVisualSettings();
+</script>
+</body>
+</html>
